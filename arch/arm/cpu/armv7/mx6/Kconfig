@@ -203,6 +203,12 @@ config TARGET_MX6ULL_9X9_EVK
 	select MX6ULL
 	select DM
 	select DM_THERMAL
+	
+config TARGET_MX6ULL_ALPHA_EMMC 
+	bool "Support mx6ull_alpha_emmc" 
+	select MX6ULL 
+	select DM 
+	select DM_THERMAL
 
 config TARGET_SECOMX6
 	bool "secomx6 boards"
@@ -278,5 +284,5 @@ source "board/wandboard/Kconfig"
 source "board/warp/Kconfig"
 source "board/freescale/mx6dqscm/Kconfig"
 source "board/freescale/mx6sxscm/Kconfig"
-
+source "board/freescale/mx6ull_alpha_emmc/Kconfig"
 endif

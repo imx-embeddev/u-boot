@@ -1,12 +1,15 @@
-if TARGET_MX6ULL_14X14_EVK || TARGET_MX6ULL_9X9_EVK
+if TARGET_MX6ULL_ALPHA_EMMC
 
 config SYS_BOARD
-	default "mx6ullevk"
+	default "mx6ull_alpha_emmc"
 
 config SYS_VENDOR
 	default "freescale"
 
+config SYS_SOC
+	default "mx6"
+
 config SYS_CONFIG_NAME
-	default "mx6ullevk"
+	default "mx6ull_alpha_emmc"
 
 endif
