@@ -5,13 +5,13 @@
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
-#ifndef __MX6ULLEVK_CONFIG_H
-#define __MX6ULLEVK_CONFIG_H
+#ifndef __MX6ULL_ALPHA_EMMC_CONFIG_H 
+#define __MX6ULL_ALPHA_EMMC_CONFIG_H
 
 
 #include <asm/arch/imx-regs.h>
 #include <linux/sizes.h>
-#include "mx6_common.h"
+#include "mx6_common.h"          /* 如果在 mx6ull_alpha_emmc.h 中没有发现配置某个功能或命令，但是实际却存在的话，可以到 mx6_common.h 文件里面去找一下 */
 #include <asm/imx-common/gpio.h>
 
 /* uncomment for PLUGIN mode support */
@@ -27,7 +27,9 @@
 #endif
 
 #define is_mx6ull_9x9_evk()	CONFIG_IS_ENABLED(TARGET_MX6ULL_9X9_EVK)
-
+/* 设置 DRAM 的大小，宏 PHYS_SDRAM_SIZE 就是板子上 DRAM 的大小
+   如果用的 NXP 官方的 9X9 EVK 开发板的话 DRAM 大小就为 256MB。否则的话默认为 512MB，
+   正点原子的 I.MX6U-ALPHA 开发板用的是 512MB DDR3。 */
 #ifdef CONFIG_TARGET_MX6ULL_9X9_EVK
 #define PHYS_SDRAM_SIZE		SZ_256M
 #define CONFIG_BOOTARGS_CMA_SIZE   "cma=96M "
@@ -47,21 +49,21 @@
 
 #define CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
 
-#define CONFIG_DISPLAY_CPUINFO
-#define CONFIG_DISPLAY_BOARDINFO
+#define CONFIG_DISPLAY_CPUINFO        /* uboot 启动的时候可以输出 CPU 信息 */
+#define CONFIG_DISPLAY_BOARDINFO      /* uboot 启动的时候可以输出板子信息 */
 
 /* Size of malloc() pool */
-#define CONFIG_SYS_MALLOC_LEN		(16 * SZ_1M)
+#define CONFIG_SYS_MALLOC_LEN		(16 * SZ_1M) /* malloc 内存池大小，这里设置为 16MB */
 
-#define CONFIG_BOARD_EARLY_INIT_F
-#define CONFIG_BOARD_LATE_INIT
-
+#define CONFIG_BOARD_EARLY_INIT_F     /* 这样 board_init_f 函数就会调用 board_early_init_f 函数 */
+#define CONFIG_BOARD_LATE_INIT        /* board_init_r 函数就会调用 board_late_init 函数 */
+/* 使能 I.MX6ULL 的串口功能 */
 #define CONFIG_MXC_UART
-#define CONFIG_MXC_UART_BASE		UART1_BASE
+#define CONFIG_MXC_UART_BASE		UART1_BASE       /* 表示串口寄存器基地址，这里使用的串口 1，基地址为 UART1_BASE */
 
 /* MMC Configs */
 #ifdef CONFIG_FSL_USDHC
-#define CONFIG_SYS_FSL_ESDHC_ADDR	USDHC2_BASE_ADDR
+#define CONFIG_SYS_FSL_ESDHC_ADDR	USDHC2_BASE_ADDR /* EMMC 所使用接口的寄存器基地址，也就是 USDHC2 的基地址(EMMC接在I.MX6ULL的USDHC2上，) */
 
 /* NAND pin conflicts with usdhc2 */
 #ifdef CONFIG_SYS_USE_NAND
@@ -222,9 +224,9 @@
 #define CONFIG_SYS_MEMTEST_END		(CONFIG_SYS_MEMTEST_START + 0x8000000)
 
 #define CONFIG_SYS_LOAD_ADDR		CONFIG_LOADADDR
-#define CONFIG_SYS_HZ			1000
+#define CONFIG_SYS_HZ			1000     /* 系统时钟频率，这里为 1000Hz */
 
-#define CONFIG_STACKSIZE		SZ_128K
+#define CONFIG_STACKSIZE		SZ_128K  /* 栈大小，这里为 128KB。 */
 
 /* Physical Memory Map */
 #define CONFIG_NR_DRAM_BANKS		1
@@ -348,17 +350,17 @@
 #define CONFIG_IMX_THERMAL
 
 #ifndef CONFIG_SPL_BUILD
-#define CONFIG_VIDEO
+#define CONFIG_VIDEO       /* 用于开启 LCD */
 #ifdef CONFIG_VIDEO
 #define CONFIG_CFB_CONSOLE
 #define CONFIG_VIDEO_MXS
-#define CONFIG_VIDEO_LOGO
+#define CONFIG_VIDEO_LOGO  /* 使能 LOGO 显示 */
 #define CONFIG_VIDEO_SW_CURSOR
 #define CONFIG_VGA_AS_SINGLE_DEVICE
 #define CONFIG_SYS_CONSOLE_IS_IN_ENV
 #define CONFIG_SPLASH_SCREEN
 #define CONFIG_SPLASH_SCREEN_ALIGN
-#define CONFIG_CMD_BMP
+#define CONFIG_CMD_BMP    /* 使能 BMP 图片显示指令,这样就可以在 uboot 中显示图片了，一般用于显示 logo */
 #define CONFIG_BMP_16BPP
 #define CONFIG_VIDEO_BMP_RLE8
 #define CONFIG_VIDEO_BMP_LOGO
