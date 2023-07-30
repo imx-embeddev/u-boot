@@ -777,26 +777,29 @@ void do_enable_parallel_lcd(struct display_info_t const *dev)
 	gpio_direction_output(IMX_GPIO_NR(1, 8) , 1);
 }
 
-struct display_info_t const displays[] = {{
-	.bus = MX6UL_LCDIF1_BASE_ADDR,
-	.addr = 0,
-	.pixfmt = 24,
-	.detect = NULL,
-	.enable	= do_enable_parallel_lcd,
-	.mode	= {
-		.name			= "TFT43AB",
-		.xres           = 480,
-		.yres           = 272,
-		.pixclock       = 108695,
-		.left_margin    = 8,
-		.right_margin   = 4,
-		.upper_margin   = 2,
-		.lower_margin   = 4,
-		.hsync_len      = 41,
-		.vsync_len      = 10,
-		.sync           = 0,
-		.vmode          = FB_VMODE_NONINTERLACED
-} } };
+struct display_info_t const displays[] = {
+	{
+		.bus = MX6UL_LCDIF1_BASE_ADDR,
+		.addr = 0,
+		.pixfmt = 24,
+		.detect = NULL,
+		.enable = do_enable_parallel_lcd,
+		.mode   = {
+			.name           = "ATK-LCD-4.3-800x480",
+			.xres           = 800,
+			.yres           = 480,
+			.pixclock       = 10119,
+			.left_margin    = 210,
+			.right_margin   = 46,
+			.upper_margin   = 22,
+			.lower_margin   = 23,
+			.hsync_len      = 20,
+			.vsync_len      = 3,
+			.sync           = 0,
+			.vmode          = FB_VMODE_NONINTERLACED
+		}
+	},
+};
 size_t display_count = ARRAY_SIZE(displays);
 #endif
 
