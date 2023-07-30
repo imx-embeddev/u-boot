@@ -330,21 +330,23 @@
 #define CONFIG_CMD_MII
 #define CONFIG_FEC_MXC
 #define CONFIG_MII
-#define CONFIG_FEC_ENET_DEV		1
+#define CONFIG_FEC_ENET_DEV 1 /* 选择使用哪个网口。默认为 1，选择 ENET2；为0时，选择 ENET1 */
 
 #if (CONFIG_FEC_ENET_DEV == 0)
 #define IMX_FEC_BASE			ENET_BASE_ADDR
-#define CONFIG_FEC_MXC_PHYADDR          0x2
+#define CONFIG_FEC_MXC_PHYADDR 0x0 /* ENET1的PHY地址，默认是 0X2，正点原子开发板为0x0，这里修改为0x0 */
 #define CONFIG_FEC_XCV_TYPE             RMII
 #elif (CONFIG_FEC_ENET_DEV == 1)
 #define IMX_FEC_BASE			ENET2_BASE_ADDR
-#define CONFIG_FEC_MXC_PHYADDR		0x1
+#define CONFIG_FEC_MXC_PHYADDR 0x1 /* ENET2的PHY地址，默认是 0X1，正点原子开发板为0x1，这里保持不变 */
 #define CONFIG_FEC_XCV_TYPE		RMII
 #endif
 #define CONFIG_ETHPRIME			"FEC"
 
 #define CONFIG_PHYLIB
-#define CONFIG_PHY_MICREL
+/* 此宏用于使能uboot中 Micrel公司的PHY驱动，注意这里直接删掉或者使用块注释，不要使用 // 来注释，否则会在 u-boot.lds 首行生成一行莫名其妙的代码 */
+/* #define CONFIG_PHY_MICREL */
+#define CONFIG_PHY_SMSC        /* 此宏用于使能uboot中 SMSC 公司的PHY驱动 */   
 #endif
 
 #define CONFIG_IMX_THERMAL

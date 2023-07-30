@@ -221,7 +221,24 @@ int genphy_config_aneg(struct phy_device *phydev)
 int genphy_update_link(struct phy_device *phydev)
 {
 	unsigned int mii_reg;
+#ifdef CONFIG_PHY_SMSC
+	/* 条件编译代码段，只有使用 SMSC公司的 PHY这段代码才会执行 */
+	static int lan8720_flag = 0;
+	int bmcr_reg = 0;
+	if (lan8720_flag == 0)
+	{
+		bmcr_reg = phy_read(phydev, MDIO_DEVAD_NONE, MII_BMCR);  /* 读取LAN8720A的 BMCR寄存器 (寄存器地址为 0)，此寄存器为LAN8720A的配置寄存器，这里先读取此寄存器的默认值并保存起来。 */
+		phy_write(phydev, MDIO_DEVAD_NONE, MII_BMCR, BMCR_RESET);/* 向寄存器BMCR寄存器写入BMCR_RESET(值为0X8000)，因为BMCR的 bit15是软件复位控制位，复位完成以后此位会自动清零。*/
+		/* 等待 LAN8720A软件复位完成，也就是判断 BMCR的 bit15位是否为 1，为 1的话表示还没有复位完成。*/
+		while(phy_read(phydev, MDIO_DEVAD_NONE, MII_BMCR) & 0X8000)
+		{
+			udelay(100);
+		}
+		phy_write(phydev, MDIO_DEVAD_NONE, MII_BMCR, bmcr_reg); /* 重新向 BMCR寄存器写入以前的值，也就是前边读出的那个值。 */
+		lan8720_flag = 1;
 
+	}
+#endif
 	/*
 	 * Wait if the link is up, and autonegotiation is in progress
 	 * (ie - we're capable and it's not done)
