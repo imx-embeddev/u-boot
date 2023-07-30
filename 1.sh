@@ -122,6 +122,13 @@ function build_NXP_uboot()
     download_imx
 }
 
+function build_ALPHA_uboot()
+{
+    BOARD_CONFIG_NAME=mx6ull_alpha_emmc_defconfig
+    build_project
+    download_imx
+}
+
 function echo_menu()
 {
     echo "================================================="
@@ -144,10 +151,10 @@ function func_process()
 {
 	read -p "请选择功能,默认选择0:" choose
 	case "${choose}" in
-		"0") build_project;;
+		"0") build_ALPHA_uboot;;
 		"1") clean_project;;
 		"2") build_NXP_uboot;;
-		*) build_project;;
+		*) build_ALPHA_uboot;;
 	esac
 }
 
