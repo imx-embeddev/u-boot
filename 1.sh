@@ -45,6 +45,7 @@ function time_count_down
         echo -ne "\r\r"        # echo -e 处理特殊字符  \r 光标移至行首，但不换行
         sleep 1
     done
+    echo "" # 打印一个空行，防止出现混乱
 }
 function clean_project()
 {
