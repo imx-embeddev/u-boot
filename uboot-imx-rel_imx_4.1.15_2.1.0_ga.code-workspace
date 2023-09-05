@@ -1,9 +1,9 @@
 {
 	"folders": [
-		{
-			"path": "."
-		}
-	],
+            {
+                  "path": "."
+            }
+      ],
 	"settings": {
 		// 搜索时不想显示的文件可按以下格式屏蔽(为 true 时屏蔽)
 		"search.exclude": {

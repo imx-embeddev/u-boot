@@ -8,28 +8,28 @@ config UBOOTVERSION
 	string
 	option env="UBOOTVERSION"
 
-menu "My test menu one"
-
-config MY_TESTCONFIG1
-	bool "This is my test config one"
-	default y
-	help
-		This is a empty config, just for test!
-
-config MY_TESTCONFIG2
-	tristate  "This is my test config two"
-	default y
-	help
-		This is a empty config, just for test!
-
-config MY_TESTCONFIG3
-	string  "This is my test config three"
-	help
-		This is a empty config, just for test!
-
-endmenu
-
-source "menuconfig/Kconfig"
+#menu "My test menu one"
+#
+#config MY_TESTCONFIG1
+#	bool "This is my test config one"
+#	default y
+#	help
+#		This is a empty config, just for test!
+#
+#config MY_TESTCONFIG2
+#	tristate  "This is my test config two"
+#	default y
+#	help
+#		This is a empty config, just for test!
+#
+#config MY_TESTCONFIG3
+#	string  "This is my test config three"
+#	help
+#		This is a empty config, just for test!
+#
+#endmenu
+#
+#source "menuconfig/Kconfig"
 
 # Allow defaults in arch-specific code to override any given here
 source "arch/Kconfig"
