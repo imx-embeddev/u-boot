@@ -22,7 +22,7 @@
 #endif
 
 //#define is_mx6ull_9x9_evk()	CONFIG_IS_ENABLED(TARGET_MX6ULL_9X9_EVK)
-
+#define is_mx6ull_alpha_emmc()	CONFIG_IS_ENABLED(TARGET_MX6ULL_ALPHA_EMMC)
 #ifdef CONFIG_TARGET_MX6ULL_9X9_EVK
 #define PHYS_SDRAM_SIZE		SZ_256M
 #define BOOTARGS_CMA_SIZE   "cma=96M "

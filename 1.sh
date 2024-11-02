@@ -206,6 +206,9 @@ function build_NXP_uboot()
 
 function build_ALPHA_uboot()
 {
+    #make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- distclean
+    #make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- mx6ull_alpha_emmc_defconfig # sd卡启动用这个
+    #make V=0 ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- -j16
     BOARD_CONFIG_NAME=mx6ull_alpha_emmc_defconfig
     build_project
     download_imx
