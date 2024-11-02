@@ -404,7 +404,7 @@ int board_late_init(void)
 int checkboard(void)
 {
 	if (is_mx6ull_alpha_emmc())
-		puts("Board: MX6ULL 9x9 EVK\n");
+		puts("Board: MX6ULL ALPHA EMMC(8GB)\n");
 	else if (is_cpu_type(MXC_CPU_MX6ULZ))
 		puts("Board: MX6ULZ 14x14 EVK\n");
 	else

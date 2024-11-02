@@ -11,8 +11,8 @@
 #include "imx6ull.dtsi"
 
 / {
-	model = "Freescale i.MX6 ULL 14x14 EVK Board";
-	compatible = "fsl,imx6ull-14x14-evk", "fsl,imx6ull";
+	model = "Freescale i.MX6 ULL ALPHA EMMC(8GB)";
+	compatible = "fsl,imx6ull-alpha-emmc", "fsl,imx6ull";
 
 	aliases {
 		spi5 = &soft_spi;
