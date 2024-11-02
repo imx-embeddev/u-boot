@@ -74,6 +74,11 @@
             "include/configs/[n-z]*":true,
             "include/configs/[A-Z]*":true,
             "include/configs/m[a-w]*":true,
+            "arch/arm/dts/.*":true,
+            "arch/arm/dts/*.dtb":true,
+            "arch/arm/dts/[a-h]*":true,
+            "arch/arm/dts/[j-z]*":true,
+            "arch/arm/dts/imx[^6]*":true,
 		},
 		// 不想在工作区显示的文件可按以下格式屏蔽(为 true 时屏蔽)
 		"files.exclude": {
@@ -144,6 +149,11 @@
             "include/configs/[n-z]*":true,
             "include/configs/[A-Z]*":true,
             "include/configs/m[a-w]*":true,
+            "arch/arm/dts/.*":true,
+            "arch/arm/dts/*.dtb":true,
+            "arch/arm/dts/[a-h]*":true,
+            "arch/arm/dts/[j-z]*":true,
+            "arch/arm/dts/imx[^6]*":true,
 		},
 	}
 }
