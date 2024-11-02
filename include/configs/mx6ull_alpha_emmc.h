@@ -5,8 +5,8 @@
  *
  * Configuration settings for the Freescale i.MX6UL 14x14 EVK board.
  */
-#ifndef __MX6ULLEVK_CONFIG_H
-#define __MX6ULLEVK_CONFIG_H
+#ifndef __MX6ULL_ALPHA_EMMC_CONFIG_H
+#define __MX6ULL_ALPHA_EMMC_CONFIG_H
 
 
 #include <asm/arch/imx-regs.h>
@@ -21,7 +21,7 @@
 #endif
 #endif
 
-#define is_mx6ull_9x9_evk()	CONFIG_IS_ENABLED(TARGET_MX6ULL_9X9_EVK)
+//#define is_mx6ull_9x9_evk()	CONFIG_IS_ENABLED(TARGET_MX6ULL_9X9_EVK)
 
 #ifdef CONFIG_TARGET_MX6ULL_9X9_EVK
 #define PHYS_SDRAM_SIZE		SZ_256M
