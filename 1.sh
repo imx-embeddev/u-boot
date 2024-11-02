@@ -2,13 +2,11 @@
 # * =====================================================
 # * Copyright © hk. 2022-2025. All rights reserved.
 # * File name  : 1.sh
-# * Author     : 上上签
-# * Date       : 2023-07-25
+# * Author     : 苏木
+# * Date       : 2024-11-01
 # * ======================================================
 ##
 
-SCRIPT_NAME=${0#*/}
-SCRIPT_PATH=${0%/*}
 ##======================================================
 BLACK="\033[1;30m"
 RED='\033[1;31m'    # 红
@@ -20,14 +18,89 @@ CYAN='\033[1;36m'   # 青
 WHITE='\033[1;37m'  # 白
 CLS='\033[0m'       # 清除颜色
 
-INFO="${GREEN}INFO  ${CLS}"
-WARN="${YELLOW}WARN  ${CLS}"
-ERR="${RED}ERROR  ${CLS}"
+INFO="${GREEN}[INFO]${CLS}"
+WARN="${YELLOW}[WARN]${CLS}"
+ERR="${RED}[ERR ]${CLS}"
 
+SCRIPT_NAME=${0#*/}
+SCRIPT_CURRENT_PATH=${0%/*}
+SCRIPT_ABSOLUTE_PATH=`cd $(dirname ${0}); pwd`
+
+SYSTEM_ENVIRONMENT_FILE=/etc/profile # 系统环境变量位置
+USER_ENVIRONMENT_FILE=~/.bashrc
+SOFTWARE_DIR_PATH=~/2software        # 软件安装目录
+
+TIME_START=
+TIME_END=
+
+#===============================================
+function get_start_time()
+{
+	TIME_START=$(date +'%Y-%m-%d %H:%M:%S')
+}
+function get_end_time()
+{
+	TIME_END=$(date +'%Y-%m-%d %H:%M:%S')
+}
+
+function get_execute_time()
+{
+	start_seconds=$(date --date="$TIME_START" +%s);
+	end_seconds=$(date --date="$TIME_END" +%s);
+	duration=`echo $(($(date +%s -d "${TIME_END}") - $(date +%s -d "${TIME_START}"))) | awk '{t=split("60 s 60 m 24 h 999 d",a);for(n=1;n<t;n+=2){if($1==0)break;s=$1%a[n]a[n+1]s;$1=int($1/a[n])}print s}'`
+	echo "===*** 运行时间：$((end_seconds-start_seconds))s,time diff: ${duration} ***==="
+}
+
+function get_ubuntu_info()
+{
+    # 获取内核版本信息
+    local kernel_version=$(uname -r) # -a选项会获得更详细的版本信息
+    # 获取Ubuntu版本信息
+    local ubuntu_version=$(lsb_release -ds)
+
+    # 获取Ubuntu RAM大小
+    local ubuntu_ram_total=$(cat /proc/meminfo |grep 'MemTotal' |awk -F : '{print $2}' |sed 's/^[ \t]*//g')
+    # 获取Ubuntu 交换空间swap大小
+    local ubuntu_swap_total=$(cat /proc/meminfo |grep 'SwapTotal' |awk -F : '{print $2}' |sed 's/^[ \t]*//g')
+    #显示硬盘，以及大小
+    #local ubuntu_disk=$(sudo fdisk -l |grep 'Disk' |awk -F , '{print $1}' | sed 's/Disk identifier.*//g' | sed '/^$/d')
+    
+    #cpu型号
+    local ubuntu_cpu=$(grep 'model name' /proc/cpuinfo |uniq |awk -F : '{print $2}' |sed 's/^[ \t]*//g' |sed 's/ \+/ /g')
+    #物理cpu个数
+    local ubuntu_physical_id=$(grep 'physical id' /proc/cpuinfo |sort |uniq |wc -l)
+    #物理cpu内核数
+    local ubuntu_cpu_cores=$(grep 'cpu cores' /proc/cpuinfo |uniq |awk -F : '{print $2}' |sed 's/^[ \t]*//g')
+    #逻辑cpu个数(线程数)
+    local ubuntu_processor=$(grep 'processor' /proc/cpuinfo |sort |uniq |wc -l)
+    #查看CPU当前运行模式是64位还是32位
+    local ubuntu_cpu_mode=$(getconf LONG_BIT)
+
+    # 打印结果
+    echo "ubuntu: $ubuntu_version - $ubuntu_cpu_mode"
+    echo "kernel: $kernel_version"
+    echo "ram   : $ubuntu_ram_total"
+    echo "swap  : $ubuntu_swap_total"
+    echo "cpu   : $ubuntu_cpu,physical id is$ubuntu_physical_id,cores is $ubuntu_cpu_cores,processor is $ubuntu_processor"
+}
+#===============================================
+# 开发环境信息
+function dev_env_info()
+{
+    echo "Development environment: "
+    echo "ubuntu : 20.04.2-64(1核12线程 16GB RAM,512GB SSD)"
+    echo "VMware : VMware® Workstation 17 Pro 17.6.0 build-24238078"
+    echo "Windows: "
+    echo "          处理器 AMD Ryzen 7 5800H with Radeon Graphics 3.20 GHz 8核16线程"
+    echo "          RAM	32.0 GB (31.9 GB 可用)"
+    echo "          系统类型	64 位操作系统, 基于 x64 的处理器"
+    echo "说明: 初次安装完SDK,在以上环境下编译大约需要3小时,不加任何修改进行编译大约需要10~15分钟左右"
+}
+#===============================================
 TARGET=u-boot
 TARGET_FILE=${TARGET}.bin
-TARGET_IMX_FILE=${TARGET}.imx
-IMXDOWNLOAD_TOOL=${SCRIPT_PATH}/tools/imxdownload/imxdownload
+TARGET_IMX_FILE=${TARGET}-dtb.imx
+IMXDOWNLOAD_TOOL=${SCRIPT_CURRENT_PATH}/tools/imxdownload/imxdownload
 
 SD_NODE=/dev/sdc
 
@@ -78,7 +151,11 @@ function build_project()
 
 function download_imx()
 {
-    # 判断编译目标文件是否存在
+    
+    echo -e "${WARN}查看sd相关节点, 将使用${SD_NODE},3秒后继续..."
+    ls /dev/sd*
+    time_count_down
+    # 判断SD卡节点是否存在
     if [ ! -e "${SD_NODE}" ];then
         echo -e "${ERR}${SD_NODE}不存在,请检查SD卡是否插入..."
         return
@@ -118,7 +195,11 @@ function build_download_project()
 
 function build_NXP_uboot()
 {
-    BOARD_CONFIG_NAME=mx6ull_14x14_evk_emmc_defconfig
+    #make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- distclean
+    #make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- mx6ull_14x14_evk_emmc_defconfig # emmc启动用这个
+    #make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- mx6ull_14x14_evk_defconfig # sd卡启动用这个
+    #make V=0 ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- -j16
+    BOARD_CONFIG_NAME=mx6ull_14x14_evk_defconfig
     build_project
     download_imx
 }
@@ -134,13 +215,13 @@ function echo_menu()
 {
     echo "================================================="
 	echo -e "${GREEN}               build project ${CLS}"
-	echo -e "${GREEN}                by @上上签    ${CLS}"
+	echo -e "${GREEN}                by @苏木    ${CLS}"
 	echo "================================================="
-    echo -e "${PINK}current path       :$(pwd)${CLS}"
-    echo -e "${PINK}SCRIPT_PATH        :${SCRIPT_PATH}${CLS}"
-    echo -e "${PINK}ARCH_NAME          :${ARCH_NAME}${CLS}"
-    echo -e "${PINK}CROSS_COMPILE_NAME :${CROSS_COMPILE_NAME}${CLS}"
-    echo -e "${PINK}BOARD_CONFIG_NAME  :${BOARD_CONFIG_NAME}${CLS}"
+    echo -e "${PINK}current path         :$(pwd)${CLS}"
+    echo -e "${PINK}SCRIPT_CURRENT_PATH  :${SCRIPT_CURRENT_PATH}${CLS}"
+    echo -e "${PINK}ARCH_NAME            :${ARCH_NAME}${CLS}"
+    echo -e "${PINK}CROSS_COMPILE_NAME   :${CROSS_COMPILE_NAME}${CLS}"
+    echo -e "${PINK}BOARD_CONFIG_NAME    :${BOARD_CONFIG_NAME}${CLS}"
     echo ""
     echo -e "* [0] 编译uboot工程"
     echo -e "* [1] 清理uboot工程"
