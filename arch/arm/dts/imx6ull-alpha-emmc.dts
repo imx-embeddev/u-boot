@@ -76,6 +76,16 @@
 			enable-active-high;
 		};
 
+        reg_sd2_vmmc: regulator@2 {
+			compatible = "regulator-fixed";
+			regulator-name = "+V3.3";
+			regulator-min-microvolt = <3300000>;
+			regulator-max-microvolt = <3300000>;
+			gpio = <&gpio4 10 GPIO_ACTIVE_HIGH>;
+			u-boot,off-on-delay-us = <20000>;
+			enable-active-high;
+		};
+
 		reg_gpio_dvfs: regulator-gpio {
 			compatible = "regulator-gpio";
 			pinctrl-names = "default";
@@ -786,9 +796,13 @@
 };
 
 &usdhc2 {
-	pinctrl-names = "default";
-	pinctrl-0 = <&pinctrl_usdhc2>;
+	pinctrl-names = "default", "state_100mhz", "state_200mhz";
+	pinctrl-0 = <&pinctrl_usdhc2_8bit>;
+	pinctrl-1 = <&pinctrl_usdhc2_8bit_100mhz>;
+	pinctrl-2 = <&pinctrl_usdhc2_8bit_200mhz>;
+    bus-width = <8>;
 	non-removable;
+    vmmc-supply = <&reg_sd2_vmmc>;
 	status = "okay";
 };
 
