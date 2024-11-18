@@ -123,8 +123,13 @@ function time_count_down
 function clean_project()
 {
     make ARCH=${ARCH_NAME} CROSS_COMPILE=${CROSS_COMPILE_NAME} distclean
+    # make ARCH=${ARCH_NAME} CROSS_COMPILE=${CROSS_COMPILE_NAME} clean
 }
 
+# make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- distclean # 清除生成的所有文件
+# make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- clean     # 清除部分文件
+# make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- mx6ull_14x14_evk_defconfig
+# make V=0 ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- -j16
 function build_project()
 {
     if [ -f "${TARGET_FILE}" ];then
