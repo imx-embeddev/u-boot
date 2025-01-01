@@ -26,8 +26,17 @@ SCRIPT_NAME=${0#*/}
 SCRIPT_CURRENT_PATH=${0%/*}
 SCRIPT_ABSOLUTE_PATH=`cd $(dirname ${0}); pwd`
 
+# Github Actions托管的linux服务器有以下用户级环境变量，系统级环境变量加上sudo好像也权限修改
+# .bash_logout  当用户注销时，此文件将被读取，通常用于清理工作，如删除临时文件。
+# .bashrc       此文件包含特定于 Bash Shell 的配置，如别名和函数。它在每次启动非登录 Shell 时被读取。
+# .profile、.bash_profile 这两个文件位于用户的主目录下，用于设置特定用户的环境变量和启动程序。当用户登录时，
+#                        根据 Shell 的类型和配置，这些文件中的一个或多个将被读取。
+USER_ENV_FILE_BASHRC=~/.bashrc
+USER_ENV_FILE_PROFILE=~/.profile
+USER_ENV_FILE_BASHRC_PROFILE=~/.bash_profile
+
 SYSTEM_ENVIRONMENT_FILE=/etc/profile # 系统环境变量位置
-USER_ENVIRONMENT_FILE=~/.bashrc
+
 SOFTWARE_DIR_PATH=~/2software        # 软件安装目录
 
 TIME_START=
@@ -219,8 +228,25 @@ function build_ALPHA_uboot()
     download_imx
 }
 
+function source_env_info()
+{
+    if [ -f ${USER_ENV_FILE_PROFILE} ]; then
+        source ${USER_ENV_FILE_BASHRC}
+    fi
+    # 修改可能出现的其他用户级环境变量，防止不生效
+    if [ -f ${USER_ENV_FILE_PROFILE} ]; then
+        source ${USER_ENV_FILE_PROFILE}
+    fi
+
+    if [ -f ${USER_ENV_FILE_BASHRC_PROFILE} ]; then
+        source ${USER_ENV_FILE_BASHRC_PROFILE}
+    fi
+
+}
+
 function github_actions_build()
 {
+    source_env_info
     #make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- distclean
     #make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- mx6ull_alpha_emmc_defconfig # sd卡启动用这个
     #make V=0 ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- -j16
