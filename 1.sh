@@ -219,6 +219,15 @@ function build_ALPHA_uboot()
     download_imx
 }
 
+function github_actions_build()
+{
+    #make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- distclean
+    #make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- mx6ull_alpha_emmc_defconfig # sd卡启动用这个
+    #make V=0 ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- -j16
+    BOARD_CONFIG_NAME=mx6ull_alpha_emmc_defconfig
+    build_project
+}
+
 function echo_menu()
 {
     echo "================================================="
@@ -234,16 +243,27 @@ function echo_menu()
     echo -e "* [0] 编译uboot工程"
     echo -e "* [1] 清理uboot工程"
     echo -e "* [2] 编译NXP官方原版uboot工程"
+    echo -e "* [3] github actions编译工程并发布"
     echo "================================================="
 }
 
 function func_process()
 {
-	read -p "请选择功能,默认选择0:" choose
+	# read -p "请选择功能,默认选择0:" choose
+    read -t 3 -p "请选择功能(3s后超时自动执行),默认选择0,超时选择3:" choose
+    echo "" # 换行一下
+    if [ -z "${choose}" ]; then
+        choose=3
+        echo -e "${WARN}输入超时，没有收到任何输入。choose=${choose}"
+    else
+        echo -e "${INFO}你输入了：${choose}"
+    fi
+
 	case "${choose}" in
 		"0") build_ALPHA_uboot;;
 		"1") clean_project;;
 		"2") build_NXP_uboot;;
+		"3") github_actions_build;;
 		*) build_ALPHA_uboot;;
 	esac
 }
