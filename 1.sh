@@ -163,7 +163,7 @@ function time_count_down
 
 function clean_project()
 {
-    if [ ! -d "${RESULT_OUTPUT}" ];then
+    if [ -d "${RESULT_OUTPUT}" ];then
         rm -rvf  ${RESULT_OUTPUT}
     fi
 
@@ -331,7 +331,7 @@ function update_result_file()
     # 验证压缩结果
     if [ -f "$output_file" ]; then
         echo "打包成功！文件结构验证："
-        tar -tjf "$output_file" | head -n 5
+        tar -tjf "$output_file" # | head -n 5
         echo -e "\n生成文件："
         ls -lh "$output_file"
     else
@@ -351,6 +351,11 @@ function github_actions_build()
 
     # 清理、编译文件
     get_start_time
+    # 删除成果物输出目录
+    if [ -d "${RESULT_OUTPUT}" ];then
+        rm -rvf  ${RESULT_OUTPUT}
+    fi
+
     echo -e "${INFO}正在清理工程文件..."
     make ARCH=${ARCH_NAME} CROSS_COMPILE=${CROSS_COMPILE_NAME} distclean > make.log
 
