@@ -25,6 +25,7 @@ ERR="${RED}[ERR ]${CLS}"
 SCRIPT_NAME=${0#*/}
 SCRIPT_CURRENT_PATH=${0%/*}
 SCRIPT_ABSOLUTE_PATH=`cd $(dirname ${0}); pwd`
+PROJECT_ROOT=${SCRIPT_ABSOLUTE_PATH} # 工程的源码目录，一定要和编译脚本是同一个目录
 
 # Github Actions托管的linux服务器有以下用户级环境变量，系统级环境变量加上sudo好像也权限修改
 # .bash_logout  当用户注销时，此文件将被读取，通常用于清理工作，如删除临时文件。
@@ -39,10 +40,9 @@ SYSTEM_ENVIRONMENT_FILE=/etc/profile # 系统环境变量位置
 
 SOFTWARE_DIR_PATH=~/2software        # 软件安装目录
 
+#===============================================
 TIME_START=
 TIME_END=
-
-#===============================================
 function get_start_time()
 {
 	TIME_START=$(date +'%Y-%m-%d %H:%M:%S')
@@ -92,31 +92,62 @@ function get_ubuntu_info()
     echo "swap  : $ubuntu_swap_total"
     echo "cpu   : $ubuntu_cpu,physical id is$ubuntu_physical_id,cores is $ubuntu_cpu_cores,processor is $ubuntu_processor"
 }
-#===============================================
-# 开发环境信息
+
+# 本地虚拟机VMware开发环境信息
 function dev_env_info()
 {
     echo "Development environment: "
-    echo "ubuntu : 20.04.2-64(1核12线程 16GB RAM,512GB SSD)"
+    echo "ubuntu : 20.04.2-64(1核12线程 16GB RAM,512GB SSD) arm"
     echo "VMware : VMware® Workstation 17 Pro 17.6.0 build-24238078"
     echo "Windows: "
     echo "          处理器 AMD Ryzen 7 5800H with Radeon Graphics 3.20 GHz 8核16线程"
     echo "          RAM	32.0 GB (31.9 GB 可用)"
     echo "          系统类型	64 位操作系统, 基于 x64 的处理器"
-    echo "说明: 初次安装完SDK,在以上环境下编译大约需要3小时,不加任何修改进行编译大约需要10~15分钟左右"
+    echo "linux开发板原始系统组件版本:"
+    echo "          uboot : v2019.04 https://github.com/nxp-imx/uboot-imx/releases/tag/rel_imx_4.19.35_1.1.0"
+    echo "          kernel: v4.19.71 https://github.com/nxp-imx/linux-imx/releases/tag/v4.19.71"
+    echo "          rootfs: buildroot-2023.05.1 https://buildroot.org/downloads/buildroot-2023.05.1.tar.gz"
+    echo ""
+    echo "x86_64-linux-gnu   : gcc version 9.4.0 (Ubuntu 9.4.0-1ubuntu1~20.04.2)"
+    echo "arm-linux-gnueabihf:"
+    echo "          arm-linux-gnueabihf-gcc 8.3.0"
+    echo "          https://developer.arm.com/-/media/Files/downloads/gnu-a/8.3-2019.03/binrel/gcc-arm-8.3-2019.03-x86_64-arm-linux-gnueabihf.tar.xz"
 }
 #===============================================
+# uboot相关的一些变量和函数的定义
 TARGET=u-boot
 TARGET_FILE=${TARGET}.bin
 TARGET_IMX_FILE=${TARGET}-dtb.imx
 IMXDOWNLOAD_TOOL=${SCRIPT_CURRENT_PATH}/tools/imxdownload/imxdownload
+
+RESULT_OUTPUT=image_output
+RESULT_FILE=(u-boot.bin u-boot-dtb.bin u-boot-dtb.imx)
 
 SD_NODE=/dev/sdc
 
 ARCH_NAME=arm
 CROSS_COMPILE_NAME=arm-linux-gnueabihf-
 
-BOARD_CONFIG_NAME=mx6ull_14x14_evk_emmc_defconfig
+BOARD_DEFCONFIG=mx6ull_14x14_evk_emmc_defconfig
+
+COMPILE_PLATFORM=local # local：非githubaction自动打包，githubaction：githubaction自动打包
+# 脚本运行参数处理
+echo "There are $# parameters: $@"
+while getopts "p:" arg #选项后面的冒号表示该选项需要参数
+    do
+        case ${arg} in
+            p)
+                # echo "a's arg:$OPTARG"     # 参数存在$OPTARG中
+                if [ $OPTARG == "1" ];then # 使用NXP官方的默认配置文件
+                    COMPILE_PLATFORM=githubaction
+                fi
+                ;;
+            ?)  #当有不认识的选项的时候arg为?
+                echo "${ERR}unkonw argument..."
+                exit 1
+                ;;
+        esac
+    done
 
 function time_count_down
 {
@@ -129,8 +160,13 @@ function time_count_down
     done
     echo "" # 打印一个空行，防止出现混乱
 }
+
 function clean_project()
 {
+    if [ ! -d "${RESULT_OUTPUT}" ];then
+        rm -rvf  ${RESULT_OUTPUT}
+    fi
+
     make ARCH=${ARCH_NAME} CROSS_COMPILE=${CROSS_COMPILE_NAME} distclean
     # make ARCH=${ARCH_NAME} CROSS_COMPILE=${CROSS_COMPILE_NAME} clean
 }
@@ -146,9 +182,9 @@ function build_project()
         clean_project
     fi
 
-    echo -e "${INFO}正在配置编译选项(BOARD_CONFIG_NAME=${BOARD_CONFIG_NAME})..."
-    make ARCH=${ARCH_NAME} CROSS_COMPILE=${CROSS_COMPILE_NAME} ${BOARD_CONFIG_NAME}
-    echo -e "${INFO}正在编译工程(BOARD_CONFIG_NAME=${BOARD_CONFIG_NAME})..."
+    echo -e "${INFO}正在配置编译选项(BOARD_DEFCONFIG=${BOARD_DEFCONFIG})..."
+    make ARCH=${ARCH_NAME} CROSS_COMPILE=${CROSS_COMPILE_NAME} ${BOARD_DEFCONFIG}
+    echo -e "${INFO}正在编译工程(BOARD_DEFCONFIG=${BOARD_DEFCONFIG})..."
     make V=0 ARCH=${ARCH_NAME} CROSS_COMPILE=${CROSS_COMPILE_NAME} -j16
 
     echo -e "${INFO}检查是否编译成功..."
@@ -213,7 +249,7 @@ function build_NXP_uboot()
     #make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- mx6ull_14x14_evk_emmc_defconfig # emmc启动用这个
     #make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- mx6ull_14x14_evk_defconfig # sd卡启动用这个
     #make V=0 ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- -j16
-    BOARD_CONFIG_NAME=mx6ull_14x14_evk_defconfig
+    BOARD_DEFCONFIG=mx6ull_14x14_evk_defconfig
     build_project
     download_imx
 }
@@ -223,11 +259,13 @@ function build_ALPHA_uboot()
     #make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- distclean
     #make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- mx6ull_alpha_emmc_defconfig # sd卡启动用这个
     #make V=0 ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- -j16
-    BOARD_CONFIG_NAME=mx6ull_alpha_emmc_defconfig
+    BOARD_DEFCONFIG=mx6ull_alpha_emmc_defconfig
     build_project
     download_imx
 }
 
+# ==================
+# githubaction编译、打包、发布要用的
 function source_env_info()
 {
     if [ -f ${USER_ENV_FILE_PROFILE} ]; then
@@ -244,14 +282,86 @@ function source_env_info()
 
 }
 
+# make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- savedefconfig
+function update_result_file()
+{
+    echo -e "${PINK}current path         :$(pwd)${CLS}"
+    echo -e "${PINK}BOARD_DEFCONFIG      :${BOARD_DEFCONFIG}${CLS}"
+    
+    # 保存默认配置文件
+    make ARCH=${ARCH_NAME} CROSS_COMPILE=${CROSS_COMPILE_NAME} savedefconfig
+    if [ ! -d "${RESULT_OUTPUT}" ];then
+        mkdir -pv ${RESULT_OUTPUT}
+    fi
+    cp -avf .config ${RESULT_OUTPUT}/${BOARD_DEFCONFIG}
+    # 成果物文件
+    for temp in "${RESULT_FILE[@]}";
+    do
+        if [ -f "${TARGET_FILE}" ];then
+            cp -avf ${temp} ${RESULT_OUTPUT}
+        else
+            echo "${temp} 不存在"
+        fi
+    done
+    # 开始判断并打包文件
+    # 获取父目录绝对路径
+    parent_dir=$(dirname "$(realpath "${RESULT_OUTPUT}")")
+    # 判断是否是 Git 仓库并获取版本号
+    if git -C "$parent_dir" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+        version=$(git -C "$parent_dir" rev-parse --short HEAD)
+    else
+        version="unknown"
+    fi
+    # 生成时间戳（格式：年月日时分秒）
+    timestamp=$(date +%Y%m%d%H%M%S)
+    # 设置输出文件名
+    subdir="u-boot-${timestamp}-${version}"
+    output_file="${RESULT_OUTPUT}/${subdir}.tar.bz2"
+
+    # 打包压缩文件
+    echo "正在打包文件到 ${output_file} ..."
+    # 这个文件解压后直接就是文件
+    #tar -cjf "${output_file}" -C "${RESULT_OUTPUT}" . 
+    # 这个命令解压后会存在一级目录
+    tar -cjf "${output_file}" \
+        --transform "s|^|${subdir}/|" \
+        -C "${RESULT_OUTPUT}" .
+    # 验证压缩结果
+    if [ -f "$output_file" ]; then
+        echo "打包成功！文件结构验证："
+        tar -tjf "$output_file" | head -n 5
+        echo -e "\n生成文件："
+        ls -lh "$output_file"
+    else
+        echo "错误：文件打包失败"
+        exit 1
+    fi
+}
+
 function github_actions_build()
 {
+    # 设置环境变量
     source_env_info
     #make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- distclean
     #make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- mx6ull_alpha_emmc_defconfig # sd卡启动用这个
     #make V=0 ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- -j16
-    BOARD_CONFIG_NAME=mx6ull_alpha_emmc_defconfig
-    build_project
+    BOARD_DEFCONFIG=mx6ull_alpha_emmc_defconfig
+
+    # 清理、编译文件
+    get_start_time
+    echo -e "${INFO}正在清理工程文件..."
+    make ARCH=${ARCH_NAME} CROSS_COMPILE=${CROSS_COMPILE_NAME} distclean > make.log
+
+    echo -e "${INFO}正在配置编译选项(BOARD_DEFCONFIG=${BOARD_DEFCONFIG})..."
+    make ARCH=${ARCH_NAME} CROSS_COMPILE=${CROSS_COMPILE_NAME} ${BOARD_DEFCONFIG} >> make.log
+
+    echo -e "${INFO}正在编译工程(BOARD_DEFCONFIG=${BOARD_DEFCONFIG})..."
+    make V=0 ARCH=${ARCH_NAME} CROSS_COMPILE=${CROSS_COMPILE_NAME} -j16 >> make.log
+    get_end_time
+    get_execute_time
+    echo "📁 日志文件: $(realpath make.log)"
+    # 更新打包文件
+    update_result_file
 }
 
 function echo_menu()
@@ -262,34 +372,35 @@ function echo_menu()
 	echo "================================================="
     echo -e "${PINK}current path         :$(pwd)${CLS}"
     echo -e "${PINK}SCRIPT_CURRENT_PATH  :${SCRIPT_CURRENT_PATH}${CLS}"
+    echo -e "${PINK}PROJECT_ROOT         :${PROJECT_ROOT}${CLS}"
     echo -e "${PINK}ARCH_NAME            :${ARCH_NAME}${CLS}"
     echo -e "${PINK}CROSS_COMPILE_NAME   :${CROSS_COMPILE_NAME}${CLS}"
-    echo -e "${PINK}BOARD_CONFIG_NAME    :${BOARD_CONFIG_NAME}${CLS}"
+    echo -e "${PINK}BOARD_DEFCONFIG      :${BOARD_DEFCONFIG}${CLS}"
+    echo -e "${PINK}COMPILE_PLATFORM     :${COMPILE_PLATFORM}${CLS}"
     echo ""
     echo -e "* [0] 编译uboot工程"
     echo -e "* [1] 清理uboot工程"
     echo -e "* [2] 编译NXP官方原版uboot工程"
-    echo -e "* [3] github actions编译工程并发布"
+    echo -e "* [3] 保存defconfig文件"
+    echo -e "* [4] github actions编译工程并发布"
     echo "================================================="
 }
 
 function func_process()
 {
 	# read -p "请选择功能,默认选择0:" choose
-    read -t 3 -p "请选择功能(3s后超时自动执行),默认选择0,超时选择3:" choose
-    echo "" # 换行一下
-    if [ -z "${choose}" ]; then
-        choose=3
-        echo -e "${WARN}输入超时，没有收到任何输入。choose=${choose}"
+    #read -t 3 -p "请选择功能(3s后超时自动执行),默认选择0,超时选择3:" choose
+    if [ ${COMPILE_PLATFORM} == 'githubaction' ];then
+    choose=4
     else
-        echo -e "${INFO}你输入了：${choose}"
+    read -p "请选择功能,默认选择0:" choose
     fi
-
 	case "${choose}" in
 		"0") build_ALPHA_uboot;;
 		"1") clean_project;;
 		"2") build_NXP_uboot;;
-		"3") github_actions_build;;
+		"3") update_result_file;;
+		"4") github_actions_build;;
 		*) build_ALPHA_uboot;;
 	esac
 }

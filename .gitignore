@@ -94,6 +94,9 @@ GTAGS
 !.checkpatch.conf
 
 include/generated/*
+image_output
+image_output/*
+make.log
 # .config文件上传到仓库，跟踪一下，确认每次的配置改动
 !.config 
 # 最新一次编译版本记录使用
