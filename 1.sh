@@ -303,6 +303,8 @@ function update_result_file()
             echo "${temp} 不存在"
         fi
     done
+    # 日志文件
+    cp -avf make.log ${RESULT_OUTPUT}/u-boot_make.log
     # 开始判断并打包文件
     # 获取父目录绝对路径
     parent_dir=$(dirname "$(realpath "${RESULT_OUTPUT}")")
