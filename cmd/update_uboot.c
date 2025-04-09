@@ -26,7 +26,10 @@ static int do_update_uboot(cmd_tbl_t *cmdtp, int flag, int argc, char * const ar
 {
     unsigned int i = 0;
     ulong file_len = 0;
-    ulong block_cnt = 0;
+    
+    struct blk_desc *desc = NULL;
+    lbaint_t blk_count = 0;
+
     int cmd_size = sizeof(cmd_uboot[0])/sizeof(cmd_uboot[0][0]);
 
     // i = 0 下载镜像：tftp 80800000 u-boot-dtb.imx
@@ -35,6 +38,38 @@ static int do_update_uboot(cmd_tbl_t *cmdtp, int flag, int argc, char * const ar
     run_command(cmd_uboot[i], 0);
     i++;
 
+    // 获取一些sd卡信息,计算要写入的扇区数量
+    struct mmc *mmc = find_mmc_device(0);
+    if (!mmc) 
+    {
+        printf("MMC device 0 not found\n");
+        return CMD_RET_FAILURE;
+    }
+
+    desc = blk_get_devnum_by_typename("mmc", 0); // 获取扇区信息
+    if (!desc) 
+    {
+        printf("Failed to get block device\n");
+        return CMD_RET_FAILURE;
+    }
+
+    file_len = env_get_hex("filesize", 0);
+    if (!file_len) 
+    {
+        printf("[error]env_get_hex from filesize fail!\n");
+        file_len = 0xC8000;//C8000=800*1024
+    }
+    blk_count = (file_len + desc->blksz - 1) / desc->blksz; // 一共要写入的扇区数
+    //blk_count = align_up_power2(file_len, 512)/512; // 计算对齐后的文件大小,这里就是扇区数量了
+    if (SDCARD_START_SECTOR + blk_count > desc->lba) 
+    {
+        printf("Error: Not enough space on MMC\n");
+        return CMD_RET_FAILURE;
+    }
+    
+    printf("Will writing to SD card!write infoblock=%d(0x%x), count=%lu(0x%lx), sd card info:lba=%ld blksz=%ld ...\n", 
+            SDCARD_START_SECTOR, SDCARD_START_SECTOR, blk_count, blk_count, desc->lba, desc->blksz);
+
     // i = 1 切换到sd卡：mmc dev 0 0
     snprintf(cmd_uboot[i], cmd_size, "mmc dev 0 0");
     printf("#--->run cmd:%s\n", cmd_uboot[i]);
@@ -42,19 +77,11 @@ static int do_update_uboot(cmd_tbl_t *cmdtp, int flag, int argc, char * const ar
     i++;
 
     // i = 2 写入镜像：mmc write 80800000 2 516 # 这几个参数都是十六进制
-    file_len = env_get_hex("filesize", 0);
-    if (!file_len) 
-    {
-        printf("[error]env_get_hex from filesize fail!\n");
-        file_len = 0xC8000;//C8000=800*1024
-    }
-    block_cnt = align_up_power2(file_len, 512)/512; // 计算对齐后的文件大小,这里就是扇区数量了
-
     snprintf(cmd_uboot[i], cmd_size, "mmc write %x %x %lx", 
-                UBOOT_IMG_ADDR, SDCARD_START_SECTOR, block_cnt);
+                UBOOT_IMG_ADDR, SDCARD_START_SECTOR, blk_count);
     printf("#--->run cmd:%s\n", cmd_uboot[i]);
     run_command(cmd_uboot[i], 0);
-    
+
     return 0;
 }
 
