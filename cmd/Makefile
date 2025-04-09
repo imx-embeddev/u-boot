@@ -177,6 +177,9 @@ obj-$(CONFIG_CMD_AVB) += avb.o
 obj-$(CONFIG_X86) += x86/
 
 obj-$(CONFIG_ARCH_MVEBU) += mvebu/
+
+#自定义命令
+obj-$(CONFIG_CMD_UPDATE_UBOOT) += update_uboot.o
 endif # !CONFIG_SPL_BUILD
 
 # core command

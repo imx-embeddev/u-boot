@@ -1,5 +1,16 @@
 menu "Command line interface"
 
+menu "sumu commands"
+
+config CMD_UPDATE_UBOOT
+    bool "update command - update U-Boot via TFTP"
+    default y
+    help
+      This enables the 'update' command which can download U-Boot
+      via TFTP and write it to MMC/SD card.
+
+endmenu
+
 config CMDLINE
 	bool "Support U-Boot commands"
 	default y

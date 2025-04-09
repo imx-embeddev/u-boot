@@ -39,7 +39,7 @@ USER_ENV_FILE_BASHRC_PROFILE=~/.bash_profile
 SYSTEM_ENVIRONMENT_FILE=/etc/profile # 系统环境变量位置
 
 SOFTWARE_DIR_PATH=~/2software        # 软件安装目录
-
+TFTP_DIR=~/3tftp
 #===============================================
 TIME_START=
 TIME_END=
@@ -131,15 +131,34 @@ CROSS_COMPILE_NAME=arm-linux-gnueabihf-
 BOARD_DEFCONFIG=mx6ull_14x14_evk_emmc_defconfig
 
 COMPILE_PLATFORM=local # local：非githubaction自动打包，githubaction：githubaction自动打包
+COMPILE_MODE=0         # 0,清除工程后编译，1,不清理直接编译
+
+function usage()
+{
+    echo "================================================="
+	echo -e "${GREEN}               help info ${CLS}"
+	echo -e "${GREEN}                by @苏木    ${CLS}"
+	echo "================================================="
+    echo -e "${PINK}./1.sh       : 根据菜单编译工程${CLS}"
+    echo -e "${PINK}./1.sh -p 1  : githubaction自动编译工程${CLS}"
+    echo -e "${PINK}./1.sh -m 1  : 增量编译，不清理工程，不重新配置${CLS}"
+    echo ""
+    echo "================================================="
+}
 # 脚本运行参数处理
 echo "There are $# parameters: $@"
-while getopts "p:" arg #选项后面的冒号表示该选项需要参数
+while getopts "p:m:" arg #选项后面的冒号表示该选项需要参数
     do
         case ${arg} in
             p)
                 # echo "a's arg:$OPTARG"     # 参数存在$OPTARG中
                 if [ $OPTARG == "1" ];then # 使用NXP官方的默认配置文件
                     COMPILE_PLATFORM=githubaction
+                fi
+                ;;
+            m)
+                if [ $OPTARG == "1" ];then # 使用NXP官方的默认配置文件
+                    COMPILE_MODE=1
                 fi
                 ;;
             ?)  #当有不认识的选项的时候arg为?
@@ -177,26 +196,24 @@ function clean_project()
 # make V=0 ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- -j16
 function build_project()
 {
-    if [ -f "${TARGET_FILE}" ];then
+    if [ -f "${TARGET_IMX_FILE}" ] && [ "$COMPILE_MODE" != "1" ];then # 使用NXP官方的默认配置文件
         echo -e "${INFO}正在清理工程文件..."
         clean_project
+
+        echo -e "${INFO}正在配置编译选项(BOARD_DEFCONFIG=${BOARD_DEFCONFIG})..."
+        make ARCH=${ARCH_NAME} CROSS_COMPILE=${CROSS_COMPILE_NAME} ${BOARD_DEFCONFIG}
     fi
 
-    echo -e "${INFO}正在配置编译选项(BOARD_DEFCONFIG=${BOARD_DEFCONFIG})..."
-    make ARCH=${ARCH_NAME} CROSS_COMPILE=${CROSS_COMPILE_NAME} ${BOARD_DEFCONFIG}
     echo -e "${INFO}正在编译工程(BOARD_DEFCONFIG=${BOARD_DEFCONFIG})..."
     make V=0 ARCH=${ARCH_NAME} CROSS_COMPILE=${CROSS_COMPILE_NAME} -j16
 
     echo -e "${INFO}检查是否编译成功..."
-    if [ ! -f "${TARGET_FILE}" ];then
-        echo -e "${RED}++++++++++++++++++++++++++++++++++++++++++++++++++++${CLS}"
-        echo -e "${ERR}${TARGET_FILE} 编译失败,请检查后重试"
-        echo -e "${RED}++++++++++++++++++++++++++++++++++++++++++++++++++++${CLS}"
+    if [ ! -f "${TARGET_IMX_FILE}" ];then
+        echo -e "${ERR}❌ ${TARGET_IMX_FILE} 编译失败,请检查后重试"
     else
-        echo -e "${GREEN}++++++++++++++++++++++++++++++++++++++++++++++++++++${CLS}"
-        echo -e "${INFO}${TARGET_FILE} 编译成功"
-        echo -e "${GREEN}++++++++++++++++++++++++++++++++++++++++++++++++++++${CLS}"
+        echo -e "${INFO}✅ ${TARGET_IMX_FILE} 编译成功"
     fi
+    cp -avf ${TARGET_IMX_FILE} ${TFTP_DIR}
 }
 
 function download_imx()
@@ -215,7 +232,7 @@ function download_imx()
         echo -e "${ERR}${TARGET_IMX_FILE} 不存在,请检查后再下载..."
         return
     fi
-    echo -e "${INFO}3s后开始下载 ${TARGET_IMX_FILE} 到 ${SD_NODE}..."
+    echo -e "${INFO}⬇️ 3s后开始下载 ${TARGET_IMX_FILE} 到 ${SD_NODE}..."
     time_count_down
     sudo dd if=${TARGET_IMX_FILE} of=${SD_NODE} bs=1k seek=1 conv=fsync
 }
@@ -390,6 +407,7 @@ function echo_menu()
     echo -e "* [2] 编译NXP官方原版uboot工程"
     echo -e "* [3] 保存defconfig文件"
     echo -e "* [4] github actions编译工程并发布"
+    echo -e "* [5] 脚本编译帮助信息"
     echo "================================================="
 }
 
@@ -408,6 +426,7 @@ function func_process()
 		"2") build_NXP_uboot;;
 		"3") update_result_file;;
 		"4") github_actions_build;;
+        "5") usage;;
 		*) build_ALPHA_uboot;;
 	esac
 }
