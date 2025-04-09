@@ -1,0 +1,47 @@
+// cmd/update.c
+#include <common.h>
+#include <command.h>
+
+static char cmd_uboot[][256] = {
+    // 配置ip
+    "setenv ipaddr 192.168.10.102",     // 开发板 IP 地址
+    "setenv ethaddr 00:04:9f:04:d2:35", // 开发板网卡 MAC 地址 b8:ae:1d:01:00:00
+    "setenv gatewayip 192.168.10.1",    // 开发板默认网关
+    "setenv netmask 255.255.255.0",     // 开发板子网掩码
+    "setenv serverip 192.168.10.101",   // 服务器地址，也就是 Ubuntu 地址
+
+    // 配置bootargs
+    "setenv bootargs \'console=ttymxc0,115200 root=/dev/nfs nfsroot=192.168.10.101:/home/sumu/4nfs/imx6ull_rootfs,proto=tcp rw ip=192.168.10.102:192.168.10.101:192.168.10.1:255.255.255.0::eth0:off init=/linuxrc\'",
+    "print ipaddr ethaddr gatewayip netmask serverip bootargs",
+    "saveenv",                          // 保存环境变量
+};
+
+static int do_setup_start_param(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+{
+    unsigned int i = 0;
+    unsigned int cmd_num = sizeof(cmd_uboot)/sizeof(cmd_uboot[0]);
+    // 这里只提示，不执行，手动执行即可
+    for(i = 0; i < cmd_num; i++)
+    {
+        printf("#-->run cmd: %s\n", cmd_uboot[i]);
+    }
+    return 0;
+}
+
+/**
+ * @brief  U_BOOT_CMD(name,maxargs,rep,cmd,usage,help)
+ * @note   
+ * @param  [in] name	命令的名称，此处直接输入即可，不要用字符串"xxx"的形式
+ * @param  [in] maxargs	命令的最大参数个数，至少为1，表示命令本身
+ * @param  [in] rep	    是否自动重复（为1的话下次直接按Enter键会重复执行此命令）
+ * @param  [in] cmd	    命令对应的响应函数，即之前的do_mycmd()函数，直接使用函数名
+ * @param  [in] usage	简短的使用说明（字符串）
+ * @param  [in] help	输入help后显示的较详细的帮助文档（字符串）,help xxx
+ * @param  [out]
+ * @retval 
+ */
+U_BOOT_CMD(
+    setup_start_param, 1, 0, do_setup_start_param,
+    "set ip & bootargs",
+    "\nDownload the kernel image through tftp and mount the root file system through nfs"
+);

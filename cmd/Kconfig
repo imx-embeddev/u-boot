@@ -9,6 +9,12 @@ config CMD_UPDATE_UBOOT
       This enables the 'update' command which can download U-Boot
       via TFTP and write it to MMC/SD card.
 
+config CMD_SETUP_START_PARAM
+    bool "set uboot ip & bootargs"
+    default y
+    help
+      Download the kernel image through tftp and mount the root file system through nfs
+
 endmenu
 
 config CMDLINE
