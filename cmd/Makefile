@@ -181,6 +181,7 @@ obj-$(CONFIG_ARCH_MVEBU) += mvebu/
 #自定义命令
 obj-$(CONFIG_CMD_UPDATE_UBOOT) += update_uboot.o
 obj-$(CONFIG_CMD_SETUP_START_PARAM) += setup_start_param.o
+obj-$(CONFIG_CMD_DTB_INFO) += dtb_info.o
 endif # !CONFIG_SPL_BUILD
 
 # core command
