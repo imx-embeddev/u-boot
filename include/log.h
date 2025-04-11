@@ -408,4 +408,25 @@ static inline int log_init(void)
 }
 #endif
 
+// =================================
+// 自定义printf函数
+// #undef PRT
+// #undef PRTE
+#include <string.h>
+#define SFILE_NAME(x) (strrchr(x,'/')?(strrchr(x,'/')+1):x)
+#ifndef PRT
+#define PRT(fmt...) \
+        do { \
+            printf("\033[33m""[%s:%d][%s]""\033[0m", SFILE_NAME(__FILE__), __LINE__, __FUNCTION__); \
+            printf(fmt); \
+        } while(0)
+#endif
+#ifndef PRTE
+#define PRTE(fmt...) \
+        do { \
+                printf("\033[31m""[%s:%d][%s]""\033[0m", SFILE_NAME(__FILE__), __LINE__, __FUNCTION__); \
+                printf(fmt); \
+        } while(0)
+#endif
+
 #endif
