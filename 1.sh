@@ -132,7 +132,7 @@ BOARD_DEFCONFIG=mx6ull_14x14_evk_emmc_defconfig
 
 COMPILE_PLATFORM=local # local：非githubaction自动打包，githubaction：githubaction自动打包
 COMPILE_MODE=0         # 0,清除工程后编译，1,不清理直接编译
-
+DOWNLOAD_SDCARD=0      # 0,不执行下载到sd卡的流程，1,编译完执行下载到sd卡流程
 function usage()
 {
     echo "================================================="
@@ -140,6 +140,7 @@ function usage()
 	echo -e "${GREEN}                by @苏木    ${CLS}"
 	echo "================================================="
     echo -e "${PINK}./1.sh       : 根据菜单编译工程${CLS}"
+    echo -e "${PINK}./1.sh -d    : 编译后下载${CLS}"
     echo -e "${PINK}./1.sh -p 1  : githubaction自动编译工程${CLS}"
     echo -e "${PINK}./1.sh -m 1  : 增量编译，不清理工程，不重新配置${CLS}"
     echo ""
@@ -147,7 +148,7 @@ function usage()
 }
 # 脚本运行参数处理
 echo "There are $# parameters: $@"
-while getopts "p:m:" arg #选项后面的冒号表示该选项需要参数
+while getopts "p:m:d" arg #选项后面的冒号表示该选项需要参数
     do
         case ${arg} in
             p)
@@ -160,6 +161,9 @@ while getopts "p:m:" arg #选项后面的冒号表示该选项需要参数
                 if [ $OPTARG == "1" ];then # 使用NXP官方的默认配置文件
                     COMPILE_MODE=1
                 fi
+                ;;
+            d)
+                DOWNLOAD_SDCARD=1
                 ;;
             ?)  #当有不认识的选项的时候arg为?
                 echo "${ERR}unkonw argument..."
@@ -218,7 +222,9 @@ function build_project()
 
 function download_imx()
 {
-    
+    if [ ${DOWNLOAD_SDCARD} == '0' ];then
+        return
+    fi
     echo -e "${WARN}查看sd相关节点, 将使用${SD_NODE},3秒后继续..."
     ls /dev/sd*
     time_count_down
