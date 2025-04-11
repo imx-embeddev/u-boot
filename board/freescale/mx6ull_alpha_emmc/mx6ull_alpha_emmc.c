@@ -307,6 +307,25 @@ void do_enable_parallel_lcd(struct display_info_t const *dev)
 	gpio_direction_output(IMX_GPIO_NR(1, 8) , 1);
 }
 
+/** LCD时序相关参数以及其他的叫法
+ * |             param           | alias | fb_videomode | display-timings | ATK-MD0430R-800480 | unit |
+ * | --------------------------- | ----- | ------------ | --------------- | ------------------ | ---- |
+ * | HOZVAL(水平显示区域)          |  thd  |     xres     |      hactive    |        800         | tCLK |
+ * | HSPW(horizontal sync width) |  thp  |   hsync_len  |     hsync-len   |        48          | tCLK |
+ * | HBP(horizontal back porch)  |  thb  |  left_margin |    hback-porch  |        88          | tCLK |
+ * | HFP(horizontal front porth) |  thf  | right_margin |   hfront-porch  |        40          | tCLK |
+ * | LINE(垂直显示区域)            |  tvd  |     yres     |     vactive     |        480         | th   |
+ * | VSPW(vertical sync width)   |  tvp  |  vsync_len   |    vsync-len    |        3           | th   |
+ * | VBP(vertical back porch)    |  tvb  | upper_margin |   vback-porch   |        32          | th   |
+ * | VFP(vertical front porch)   |  tvf  | lower_margin |   vfront-porch  |        13          | th   |
+ * | pixclock                    |   -   |  pixclock    | clock-frequency |        31          | MHz  |
+ *
+ * 显示  1 帧：clknum = (VSPW+VBP+LINE+VFP)*(HSPW+HBP+HOZVAL+HFP)=(3+32+480+13)*(48+88+800+40)=515328
+ * 显示 60 帧：clknum = (VSPW+VBP+LINE+VFP)*(HSPW+HBP+HOZVAL+HFP)*60==515328*60=30919680≈31M
+ * 需要注意的是：
+ *           （1）uboot中的这个像素时钟参数不是频率，而是每个像素时钟周期的长度，单位为皮秒。pixclock=(1/像素时钟数)*10^12
+ *           （2）至少uboot 2019.04这个版本中的LCD实际并不是使用的设备树。
+ */
 struct display_info_t const displays[] = {{
 	.bus = MX6UL_LCDIF1_BASE_ADDR,
 	.addr = 0,
@@ -314,18 +333,18 @@ struct display_info_t const displays[] = {{
 	.detect = NULL,
 	.enable	= do_enable_parallel_lcd,
 	.mode	= {
-		.name			= "TFT43AB",
-		.xres           = 480,
-		.yres           = 272,
-		.pixclock       = 108695,
-		.left_margin    = 8,
-		.right_margin   = 4,
-		.upper_margin   = 2,
-		.lower_margin   = 4,
-		.hsync_len      = 41,
-		.vsync_len      = 10,
+		.name			= "TFT43-800x480",
+		.xres           = 800,
+		.yres           = 480,
+		.pixclock       = 32341,   // 像素时钟，每个像素时钟周期的长度，单位为皮秒。pixclock=(1/像素时钟数)*10^12
+		.left_margin    = 88,      // HBP，水平同步后肩。
+		.right_margin   = 40,      // HFP，水平同步前肩。
+		.upper_margin   = 32,      // VBP，垂直同步后肩。
+		.lower_margin   = 13,      // VFP，垂直同步前肩。
+		.hsync_len      = 48,      // HSPW，行同步脉宽。
+		.vsync_len      = 3,       // VSPW，垂直同步脉宽。
 		.sync           = 0,
-		.vmode          = FB_VMODE_NONINTERLACED
+		.vmode          = FB_VMODE_NONINTERLACED //大多数使用 FB_VMODE_NONINTERLACED，也就是不使用隔行扫描。
 } } };
 size_t display_count = ARRAY_SIZE(displays);
 #endif
