@@ -4,15 +4,18 @@
 
 static char cmd_uboot[][256] = {
     // 配置ip
-    "setenv ipaddr 192.168.10.102",     // 开发板 IP 地址
-    "setenv ethaddr 00:04:9f:04:d2:35", // 开发板网卡 MAC 地址 b8:ae:1d:01:00:00
-    "setenv gatewayip 192.168.10.1",    // 开发板默认网关
-    "setenv netmask 255.255.255.0",     // 开发板子网掩码
-    "setenv serverip 192.168.10.101",   // 服务器地址，也就是 Ubuntu 地址
+
+    "setenv ipaddr 192.168.10.102",      // 开发板 IP 地址
+    // "setenv ethaddr 00:04:9f:04:d2:35",    // 开发板网卡 MAC 地址 b8:ae:1d:01:00:00,之前是要配置这个，现在好像用下面的就行了
+    "setenv eth1addr 32:34:46:78:9A:DD", // 开发板网卡 MAC 地址
+    "setenv gatewayip 192.168.10.1",     // 开发板默认网关
+    "setenv netmask 255.255.255.0",      // 开发板子网掩码
+    "setenv serverip 192.168.10.101",    // 服务器地址，也就是 Ubuntu 地址
 
     // 配置bootargs
     "setenv bootargs \'console=ttymxc0,115200 root=/dev/nfs nfsroot=192.168.10.101:/home/sumu/4nfs/imx6ull_rootfs,proto=tcp rw ip=192.168.10.102:192.168.10.101:192.168.10.1:255.255.255.0::eth0:off init=/linuxrc\'",
-    "print ipaddr ethaddr gatewayip netmask serverip bootargs",
+    "setenv bootcmd \'tftp 80800000 /zImage\\;tftp 83000000 /imx6ull-alpha-emmc.dtb\\;bootz 80800000 - 83000000\'",
+    "print ipaddr ethaddr gatewayip netmask serverip bootargs bootcmd",
     "saveenv",                          // 保存环境变量
 };
 
@@ -24,6 +27,7 @@ static int do_setup_start_param(cmd_tbl_t *cmdtp, int flag, int argc, char * con
     for(i = 0; i < cmd_num; i++)
     {
         printf("#-->run cmd: %s\n", cmd_uboot[i]);
+        run_command(cmd_uboot[i], 0);
     }
     return 0;
 }
