@@ -15,7 +15,7 @@ static char cmd_uboot[][256] = {
     // 配置bootargs
     "setenv bootargs \'console=ttymxc0,115200 root=/dev/nfs nfsroot=192.168.10.101:/home/sumu/4nfs/imx6ull_rootfs,proto=tcp rw ip=192.168.10.102:192.168.10.101:192.168.10.1:255.255.255.0::eth0:off init=/linuxrc\'",
     "setenv bootcmd \'tftp 80800000 /zImage\\;tftp 83000000 /imx6ull-alpha-emmc.dtb\\;bootz 80800000 - 83000000\'",
-    "print ipaddr ethaddr gatewayip netmask serverip bootargs bootcmd",
+    "print ipaddr gatewayip netmask serverip bootargs bootcmd",
     "saveenv",                          // 保存环境变量
 };
 
