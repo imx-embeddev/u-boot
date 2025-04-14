@@ -296,7 +296,8 @@ int fdt_chosen(void *fdt)
     char build_time[64] = {0};
     snprintf(build_time, sizeof(build_time), "%s %s %s", U_BOOT_DATE, U_BOOT_TIME, U_BOOT_TZ);
     fdt_setprop_string(fdt, nodeoffset, "u-boot-build-time", build_time);
-
+    // 编译uboot的host主机用户名
+    fdt_setprop_string(fdt, nodeoffset, "u-boot-build-user", U_BOOT_BUILD_USER);
 	str = env_get("bootargs");
 	if (str) {
 		err = fdt_setprop(fdt, nodeoffset, "bootargs", str,
