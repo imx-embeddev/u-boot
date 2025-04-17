@@ -219,24 +219,50 @@ static int __abortboot(int bootdelay)
 #ifdef CONFIG_MENUPROMPT
 	printf(CONFIG_MENUPROMPT);
 #else
-	printf("Hit any key to stop autoboot: %2d ", bootdelay);
+	printf("Hit Ctrl+u to stop autoboot: %2d ", bootdelay);
 #endif
 
 	/*
 	 * Check if key already pressed
 	 */
+     // 这里就是打印出来前，也就是读秒出现之前，就有按键按下的话这里会被检测到
 	if (tstc()) {	/* we got a key press	*/
+        #if 1
+        int key = getc();       // 读取按键值
+        if (key == 0x15) {      // 0x15 对应 Ctrl+U
+            abort = 1;          // 终止自动启动
+            puts("\b\b\b 0");
+        } 
+        else {
+            while (tstc()) {     // 清空其他按键输入
+                getc();
+            }
+        }
+        #else
 		(void) getc();  /* consume input	*/
 		puts("\b\b\b 0");
 		abort = 1;	/* don't auto boot	*/
+        #endif
 	}
-
+    // 这里是开始读秒的过程中按下
 	while ((bootdelay > 0) && (!abort)) {
 		--bootdelay;
 		/* delay 1000 ms */
 		ts = get_timer(0);
 		do {
 			if (tstc()) {	/* we got a key press	*/
+                #if 1
+                char c = getc();
+                if (c == 0x15) { // 仅当输入为 Ctrl+u 时中断
+                    abort = 1;
+                    bootdelay = 0;
+                    break;
+                }
+                /* 其他按键：清空输入缓冲区并继续 */
+                while (tstc()) {
+                    (void) getc(); // 丢弃后续字符
+                }
+                #else
 				abort  = 1;	/* don't auto boot	*/
 				bootdelay = 0;	/* no more delay	*/
 # ifdef CONFIG_MENUKEY
@@ -245,6 +271,7 @@ static int __abortboot(int bootdelay)
 				(void) getc();  /* consume input	*/
 # endif
 				break;
+                #endif
 			}
 			udelay(10000);
 		} while (!abort && get_timer(ts) < 1000);
