@@ -277,200 +277,212 @@ function log_redirect_recovery()
 
 function uboot_project_clean()
 {
-    cd ${PROJECT_ROOT}
-    # 增量编译直接返回
-    if [ ${COMPILE_MODE} == "1" ] && [ -z $1 ]; then
-        return
-    fi
+    (
+        cd ${PROJECT_ROOT}
+        # 增量编译直接返回
+        if [ ${COMPILE_MODE} == "1" ] && [ -z $1 ]; then
+            return
+        fi
 
-    echo ""
-    echo -e "🚩 ===> function ${FUNCNAME[0]}"
-    echo -e "${PINK}current path :$(pwd)${CLS}"
-    echo -e "${PINK}board_config :${BOARD_NAME} ${BOARD_DEFCONFIG}${CLS}"
-    
-    # 1. 删除成果物目录 image_output
-    if [ -d "${RESULT_OUTPUT}" ];then
-        rm -rvf  ${RESULT_OUTPUT}
-    fi
+        echo ""
+        echo -e "🚩 ===> function ${FUNCNAME[0]}"
+        echo -e "${PINK}current path :$(pwd)${CLS}"
+        echo -e "${PINK}board_config :${BOARD_NAME} ${BOARD_DEFCONFIG}${CLS}"
+        
+        # 1. 删除成果物目录 image_output
+        if [ -d "${RESULT_OUTPUT}" ];then
+            rm -rvf  ${RESULT_OUTPUT}
+        fi
 
-    # 2. 清理整个工程
-    echo -e "${INFO}▶ make V=${V} ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- distclean"
-    log_redirect_start
-    make ARCH=arm V=${V} CROSS_COMPILE=arm-linux-gnueabihf- distclean || COMMAND_EXIT_CODE=$?
-    log_redirect_recovery ${COMMAND_EXIT_CODE}
-    # make ARCH=${ARCH_NAME} CROSS_COMPILE=${CROSS_COMPILE_NAME} clean
+        # 2. 清理整个工程
+        echo -e "${INFO}▶ make V=${V} ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- distclean"
+        log_redirect_start
+        make ARCH=arm V=${V} CROSS_COMPILE=arm-linux-gnueabihf- distclean || COMMAND_EXIT_CODE=$?
+        log_redirect_recovery ${COMMAND_EXIT_CODE}
+        # make ARCH=${ARCH_NAME} CROSS_COMPILE=${CROSS_COMPILE_NAME} clean
+    )
 }
 
 # 说明：Kconfig中默认为y的参数不会被保存到defconfig中，即便默认配置文件没有对应的选项，在执行了默认配置文件后
 # 也依然会被选中
 function uboot_savedefconfig()
 {
-    cd ${PROJECT_ROOT}
-    echo ""
-    echo -e "🚩 ===> function ${FUNCNAME[0]}"
-    echo -e "${PINK}current path :$(pwd)${CLS}"
-    echo -e "${PINK}board_config :${BOARD_NAME} ${BOARD_DEFCONFIG}${CLS}"
+    (
+        cd ${PROJECT_ROOT}
+        echo ""
+        echo -e "🚩 ===> function ${FUNCNAME[0]}"
+        echo -e "${PINK}current path :$(pwd)${CLS}"
+        echo -e "${PINK}board_config :${BOARD_NAME} ${BOARD_DEFCONFIG}${CLS}"
 
-    # 保存默认配置文件
-    echo -e "${INFO}▶ make V=${V} ARCH=${ARCH_NAME} CROSS_COMPILE=${CROSS_COMPILE_NAME} savedefconfig"
-    log_redirect_start
-    make V=${V} ARCH=${ARCH_NAME} CROSS_COMPILE=${CROSS_COMPILE_NAME} savedefconfig || COMMAND_EXIT_CODE=$?
-    log_redirect_recovery ${COMMAND_EXIT_CODE}
+        # 保存默认配置文件
+        echo -e "${INFO}▶ make V=${V} ARCH=${ARCH_NAME} CROSS_COMPILE=${CROSS_COMPILE_NAME} savedefconfig"
+        log_redirect_start
+        make V=${V} ARCH=${ARCH_NAME} CROSS_COMPILE=${CROSS_COMPILE_NAME} savedefconfig || COMMAND_EXIT_CODE=$?
+        log_redirect_recovery ${COMMAND_EXIT_CODE}
 
-    if [ ! -d "${RESULT_OUTPUT}" ];then
-        mkdir -pv ${RESULT_OUTPUT}
-    fi
-    
-    echo -e "${INFO}▶ 拷贝配置文件到 ${RESULT_OUTPUT} 目录"
-    if [ -f "defconfig" ]; then
-        cp -avf defconfig ${RESULT_OUTPUT}/${BOARD_DEFCONFIG}
-    fi
-    cp -avf .config ${RESULT_OUTPUT}
+        if [ ! -d "${RESULT_OUTPUT}" ];then
+            mkdir -pv ${RESULT_OUTPUT}
+        fi
+        
+        echo -e "${INFO}▶ 拷贝配置文件到 ${RESULT_OUTPUT} 目录"
+        if [ -f "defconfig" ]; then
+            cp -avf defconfig ${RESULT_OUTPUT}/${BOARD_DEFCONFIG}
+        fi
+        cp -avf .config ${RESULT_OUTPUT}
+    )
 }
 
 function download_imx2sd()
 {
-    cd ${PROJECT_ROOT}
+    (
+        cd ${PROJECT_ROOT}
 
-    if [ ${DOWNLOAD_SDCARD} == '0' ];then
-        return
-    fi
+        if [ ${DOWNLOAD_SDCARD} == '0' ];then
+            return
+        fi
 
-    echo ""
-    echo -e "🚩 ===> function ${FUNCNAME[0]}"
-    echo -e "${PINK}current path :$(pwd)${CLS}"
-    echo -e "${PINK}board_config :${BOARD_NAME} ${BOARD_DEFCONFIG}${CLS}"
+        echo ""
+        echo -e "🚩 ===> function ${FUNCNAME[0]}"
+        echo -e "${PINK}current path :$(pwd)${CLS}"
+        echo -e "${PINK}board_config :${BOARD_NAME} ${BOARD_DEFCONFIG}${CLS}"
 
-    # 1. 检查SD卡节点
-    echo -e "${YELLOW}▶ 查看sd相关节点, 将使用${SD_NODE},3秒后继续...${CLS}"
-    ls /dev/sd*
-    time_count_down
+        # 1. 检查SD卡节点
+        echo -e "${YELLOW}▶ 查看sd相关节点, 将使用${SD_NODE},3秒后继续...${CLS}"
+        ls /dev/sd*
+        time_count_down
 
-    # 2. 判断SD卡节点是否存在
-    if [ ! -e "${SD_NODE}" ];then
-        echo -e "${RED}${SD_NODE}不存在,请检查SD卡是否插入...${CLS}"
-        return
-    fi
+        # 2. 判断SD卡节点是否存在
+        if [ ! -e "${SD_NODE}" ];then
+            echo -e "${RED}${SD_NODE}不存在,请检查SD卡是否插入...${CLS}"
+            return
+        fi
 
-    # 3. 检查imx文件是否存在
-    if [ ! -f "${TARGET_IMX_FILE}" ];then
-        echo -e "${ERR}${TARGET_IMX_FILE} 不存在,请检查后再下载..."
-        return
-    fi
-    echo -e "${INFO}⬇️  3s后开始下载 ${TARGET_IMX_FILE} 到 ${SD_NODE}..."
-    time_count_down
-    # sudo dd if=u-boot-dtb.imx of=/dev/sdc bs=1k seek=1 conv=fsync
-    echo -e "${INFO}▶ sudo dd if=${TARGET_IMX_FILE} of=${SD_NODE} bs=1k seek=1 conv=fsync"
-    sudo dd if=${TARGET_IMX_FILE} of=${SD_NODE} bs=1k seek=1 conv=fsync
+        # 3. 检查imx文件是否存在
+        if [ ! -f "${TARGET_IMX_FILE}" ];then
+            echo -e "${ERR}${TARGET_IMX_FILE} 不存在,请检查后再下载..."
+            return
+        fi
+        echo -e "${INFO}⬇️  3s后开始下载 ${TARGET_IMX_FILE} 到 ${SD_NODE}..."
+        time_count_down
+        # sudo dd if=u-boot-dtb.imx of=/dev/sdc bs=1k seek=1 conv=fsync
+        echo -e "${INFO}▶ sudo dd if=${TARGET_IMX_FILE} of=${SD_NODE} bs=1k seek=1 conv=fsync"
+        sudo dd if=${TARGET_IMX_FILE} of=${SD_NODE} bs=1k seek=1 conv=fsync
+    )
 }
 
 function download_imx2tftp()
 {
-    cd ${PROJECT_ROOT}
-    echo ""
-    echo -e "🚩 ===> function ${FUNCNAME[0]}"
-    echo -e "${PINK}current path :$(pwd)${CLS}"
-    echo -e "${PINK}board_config :${BOARD_NAME} ${BOARD_DEFCONFIG}${CLS}"
+    (
+        cd ${PROJECT_ROOT}
+        echo ""
+        echo -e "🚩 ===> function ${FUNCNAME[0]}"
+        echo -e "${PINK}current path :$(pwd)${CLS}"
+        echo -e "${PINK}board_config :${BOARD_NAME} ${BOARD_DEFCONFIG}${CLS}"
 
-    # 1. 检查tftp目录是否存在
-    if [ ! -d "${TFTP_DIR}" ];then
-        mkdir -pv ${TFTP_DIR}
-    fi
+        # 1. 检查tftp目录是否存在
+        if [ ! -d "${TFTP_DIR}" ];then
+            mkdir -pv ${TFTP_DIR}
+        fi
 
-    # 2. 检查imx文件是否存在
-    if [ ! -f "${TARGET_IMX_FILE}" ];then
-        echo -e "${ERR}${TARGET_IMX_FILE} 不存在,请检查后再下载..."
-        return
-    fi
-    cp -avf ${TARGET_IMX_FILE} ${TFTP_DIR}
+        # 2. 检查imx文件是否存在
+        if [ ! -f "${TARGET_IMX_FILE}" ];then
+            echo -e "${ERR}${TARGET_IMX_FILE} 不存在,请检查后再下载..."
+            return
+        fi
+        cp -avf ${TARGET_IMX_FILE} ${TFTP_DIR}
+    )
 }
 
 function uboot_build()
 {
-    cd ${PROJECT_ROOT}
-    echo ""
-    echo -e "🚩 ===> function ${FUNCNAME[0]}"
-    echo -e "${PINK}current path :$(pwd)${CLS}"
-    echo -e "${PINK}board_config :${BOARD_NAME} ${BOARD_DEFCONFIG}${CLS}"
+    (
+        cd ${PROJECT_ROOT}
+        echo ""
+        echo -e "🚩 ===> function ${FUNCNAME[0]}"
+        echo -e "${PINK}current path :$(pwd)${CLS}"
+        echo -e "${PINK}board_config :${BOARD_NAME} ${BOARD_DEFCONFIG}${CLS}"
 
-    get_start_time
-    uboot_project_clean # 清理工程
+        get_start_time
+        uboot_project_clean # 清理工程
 
-    # 2. 清理整个工程
-    echo -e "${INFO}▶ make V=${V} ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- ${BOARD_DEFCONFIG}"
-    echo -e "${INFO}▶ make V=${V} ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- -j${CPUS}"
-    log_redirect_start
-    make ARCH=arm V=${V} CROSS_COMPILE=arm-linux-gnueabihf- ${BOARD_DEFCONFIG} || COMMAND_EXIT_CODE=$?
-    make ARCH=arm V=${V} CROSS_COMPILE=arm-linux-gnueabihf- -j${CPUS} || COMMAND_EXIT_CODE=$?
-    log_redirect_recovery ${COMMAND_EXIT_CODE}
+        # 2. 清理整个工程
+        echo -e "${INFO}▶ make V=${V} ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- ${BOARD_DEFCONFIG}"
+        echo -e "${INFO}▶ make V=${V} ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- -j${CPUS}"
+        log_redirect_start
+        make ARCH=arm V=${V} CROSS_COMPILE=arm-linux-gnueabihf- ${BOARD_DEFCONFIG} || COMMAND_EXIT_CODE=$?
+        make ARCH=arm V=${V} CROSS_COMPILE=arm-linux-gnueabihf- -j${CPUS} || COMMAND_EXIT_CODE=$?
+        log_redirect_recovery ${COMMAND_EXIT_CODE}
 
-    echo -e "${INFO}▶ 检查是否编译成功..."
-    if [ ! -f "${TARGET_IMX_FILE}" ];then
-        echo -e "${RED}❌ ${TARGET_IMX_FILE} 编译失败,请检查后重试!${CLS}"
-    else
-        echo -e "✅ ${TARGET_IMX_FILE} 编译成功!"
-    fi
+        echo -e "${INFO}▶ 检查是否编译成功..."
+        if [ ! -f "${TARGET_IMX_FILE}" ];then
+            echo -e "${RED}❌ ${TARGET_IMX_FILE} 编译失败,请检查后重试!${CLS}"
+        else
+            echo -e "✅ ${TARGET_IMX_FILE} 编译成功!"
+        fi
 
-    get_end_time
-    get_execute_time
+        get_end_time
+        get_execute_time
+    )
 }
 
 function update_result_file()
 {
-    cd ${PROJECT_ROOT}
-    echo ""
-    echo -e "🚩 ===> function ${FUNCNAME[0]}"
-    echo -e "${PINK}current path :$(pwd)${CLS}"
-    echo -e "${PINK}board_config :${BOARD_NAME} ${BOARD_DEFCONFIG}${CLS}"
-
-    # 成果物文件拷贝
-    echo -e "${INFO}▶ 检查并拷贝 ${RESULT_FILE[*]} 到 ${RESULT_OUTPUT}"
-    if [ ! -d "${RESULT_OUTPUT}" ];then
-        mkdir -pv ${RESULT_OUTPUT}
-    fi
-    for temp in "${RESULT_FILE[@]}";
-    do
-        if [ -f "${temp}" ];then
-            cp -avf ${temp} ${RESULT_OUTPUT}
-        else
-            echo -e "${RED}${temp} 不存在 ${CLS}"
-        fi
-    done
-
-    # 开始判断并打包文件
-    # 1.获取父目录绝对路径，判断是否是 Git 仓库并获取版本号
-    parent_dir=$(dirname "$(realpath "${RESULT_OUTPUT}")")
-    if git -C "$parent_dir" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-        version=$(git -C "$parent_dir" rev-parse --short HEAD)
-    else
-        version="unknown"
-    fi
-
-    # 2. 生成时间戳（格式：年月日时分秒）
-    timestamp=$(date +%Y%m%d%H%M%S)
-    subdir="u-boot-${timestamp}-${version}"
-    output_file="${RESULT_OUTPUT}/${subdir}.tar.bz2" # 设置输出文件名
-
-    # 3. 打包压缩文件
-    echo -e "${INFO}▶ 正在打包文件到 ${output_file} ..."
-    #tar -cjf "${output_file}" -C "${RESULT_OUTPUT}" . # 这个文件解压后直接就是文件
-    # 这个命令解压后会存在一级目录
-    tar -cjf "${output_file}" \
-        --exclude='*.tar.bz2' \
-        --transform "s|^|${subdir}/|" \
-        -C "${RESULT_OUTPUT}" .
-    
-    # 4. 验证压缩结果
-    if [ -f "$output_file" ]; then
-        echo -e "${INFO}▶ 打包成功！文件结构验证："
-        tar -tjf "$output_file" # | head -n 5
+    (
+        cd ${PROJECT_ROOT}
         echo ""
-        echo -e "${INFO}▶ 生成文件："
-        ls -lh "$output_file"
-    else
-        cho -e "${RED}错误：文件打包失败${CLS}"
-        exit 1
-    fi
+        echo -e "🚩 ===> function ${FUNCNAME[0]}"
+        echo -e "${PINK}current path :$(pwd)${CLS}"
+        echo -e "${PINK}board_config :${BOARD_NAME} ${BOARD_DEFCONFIG}${CLS}"
+
+        # 成果物文件拷贝
+        echo -e "${INFO}▶ 检查并拷贝 ${RESULT_FILE[*]} 到 ${RESULT_OUTPUT}"
+        if [ ! -d "${RESULT_OUTPUT}" ];then
+            mkdir -pv ${RESULT_OUTPUT}
+        fi
+        for temp in "${RESULT_FILE[@]}";
+        do
+            if [ -f "${temp}" ];then
+                cp -avf ${temp} ${RESULT_OUTPUT}
+            else
+                echo -e "${RED}${temp} 不存在 ${CLS}"
+            fi
+        done
+
+        # 开始判断并打包文件
+        # 1.获取父目录绝对路径，判断是否是 Git 仓库并获取版本号
+        parent_dir=$(dirname "$(realpath "${RESULT_OUTPUT}")")
+        if git -C "$parent_dir" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+            version=$(git -C "$parent_dir" rev-parse --short HEAD)
+        else
+            version="unknown"
+        fi
+
+        # 2. 生成时间戳（格式：年月日时分秒）
+        timestamp=$(date +%Y%m%d%H%M%S)
+        subdir="u-boot-${timestamp}-${version}"
+        output_file="${RESULT_OUTPUT}/${subdir}.tar.bz2" # 设置输出文件名
+
+        # 3. 打包压缩文件
+        echo -e "${INFO}▶ 正在打包文件到 ${output_file} ..."
+        #tar -cjf "${output_file}" -C "${RESULT_OUTPUT}" . # 这个文件解压后直接就是文件
+        # 这个命令解压后会存在一级目录
+        tar -cjf "${output_file}" \
+            --exclude='*.tar.bz2' \
+            --transform "s|^|${subdir}/|" \
+            -C "${RESULT_OUTPUT}" .
+        
+        # 4. 验证压缩结果
+        if [ -f "$output_file" ]; then
+            echo -e "${INFO}▶ 打包成功！文件结构验证："
+            tar -tjf "$output_file" # | head -n 5
+            echo ""
+            echo -e "${INFO}▶ 生成文件："
+            ls -lh "$output_file"
+        else
+            cho -e "${RED}错误：文件打包失败${CLS}"
+            exit 1
+        fi
+    )
 }
 
 function echo_menu()
