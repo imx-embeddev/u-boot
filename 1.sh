@@ -279,10 +279,10 @@ function arm_gcc_check()
 {
     echo -e "${INFO}▶ 验证工具链版本..."
     if arm-linux-gnueabihf-gcc --version &> /dev/null; then
-        echo -e "${GREEN}✅ 验证成功！工具链版本信息：${RESET}"
+        echo -e "${GREEN}✅ 验证成功！工具链版本信息：${CLS}"
         arm-linux-gnueabihf-gcc --version | head -n1
     else
-        echo -e "${RED}工具链验证失败，请手动执行以下命令：${RESET}"
+        echo -e "${RED}工具链验证失败，请手动执行以下命令：${CLS}"
         echo "source ~/.bashrc 或重新打开终端"
         exit 1
     fi
