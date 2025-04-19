@@ -4,9 +4,9 @@ displayName: MasterPipeline
 triggers:
   trigger: auto
   push:
-    branches:
-      include:
-        - master
+    tags:
+      prefix:
+        - ''
 stages:
   - name: compile
     displayName: 编译
