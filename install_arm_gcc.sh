@@ -4,7 +4,8 @@
 # 版本：2.0 (增强环境变量处理)
 
 # 配置参数
-DOWNLOAD_URL="https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu-a/8.3-2019.03/binrel/gcc-arm-8.3-2019.03-x86_64-arm-linux-gnueabihf.tar.xz"
+# DOWNLOAD_URL="https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu-a/8.3-2019.03/binrel/gcc-arm-8.3-2019.03-x86_64-arm-linux-gnueabihf.tar.xz"
+DOWNLOAD_URL="https://mirrors.dotsrc.org/armbian-dl/_toolchain/gcc-arm-8.3-2019.03-x86_64-arm-linux-gnueabihf.tar.xz"
 INSTALL_DIR="$HOME/2software/arm-gcc"
 TAR_FILE="${DOWNLOAD_URL##*/}"
 TOOLCHAIN_PATH="$INSTALL_DIR/arm-gcc-binaries/bin"

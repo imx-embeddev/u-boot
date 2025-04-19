@@ -10,7 +10,7 @@
 # ========================================
 # 需要检查的软件包列表
 basic_packages=(git gcc make g++ gzip bzip2 tar wget)
-kernel_required_packages=(lzop libncurses5-dev)
+kernel_required_packages=(bison flex lzop libncurses5-dev)
 buildroot_required_packages=(sed make binutils build-essential gcc g++ bash patch gzip bzip2 
                              perl tar cpio unzip rsync file bc wget g++-multilib)
 
