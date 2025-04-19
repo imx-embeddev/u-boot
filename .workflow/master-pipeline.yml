@@ -20,11 +20,11 @@ stages:
         commands:
           - cat /proc/version
           - pwd
-          - chmod 777 setup_env.sh
+          - chmod 777 setup_env.sh install_arm_gcc.sh 1.sh
           - ./setup_env.sh
+          - ./install_arm_gcc.sh
           - ls -alh
-          - mkdir image_output
-          - cp -avf 1.sh image_output
+          - ./1.sh -p 1
         artifacts:
           - name: BUILD_ARTIFACT
             path:
