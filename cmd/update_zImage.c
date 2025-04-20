@@ -19,8 +19,6 @@ static int do_update_zImage(cmd_tbl_t *cmdtp, int flag, int argc, char * const a
     unsigned int i = 0;
     ulong file_len = 0;
     char *p_file_name = NULL;
-    struct blk_desc *desc = NULL;
-    lbaint_t blk_count = 0;
 
     int cmd_size = sizeof(cmd_uboot[0])/sizeof(cmd_uboot[0][0]);
 

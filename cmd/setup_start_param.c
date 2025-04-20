@@ -19,13 +19,37 @@ static char cmd_uboot[][256] = {
     "saveenv",                          // 保存环境变量
 };
 
+
 static int do_setup_start_param(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
     unsigned int i = 0;
     unsigned int cmd_num = sizeof(cmd_uboot)/sizeof(cmd_uboot[0]);
+    char start_mmc_dev[16] = {0};
+
+    // 获取镜像名称
+    if(argc > 1 && argv[1] != NULL)
+    {
+        snprintf(start_mmc_dev, sizeof(start_mmc_dev), "%s", argv[1]);
+    }
+    else 
+    {
+        snprintf(start_mmc_dev, sizeof(start_mmc_dev), "%s", "tftp&nfs");
+    }
+
     // 这里只提示，不执行，手动执行即可
     for(i = 0; i < cmd_num; i++)
     {
+        // 从sd卡启动的话后后面要修改参数
+        if(i == 5 && !strcmp (start_mmc_dev, "sd"))
+        {
+            snprintf(cmd_uboot[i], sizeof(cmd_uboot[i]), "%s", \
+                "setenv bootargs \'console=ttymxc0,115200 root=/dev/mmcblk0p2 ip=192.168.10.102:192.168.10.101:192.168.10.1:255.255.255.0::eth0:off init=/linuxrc\'");
+        }
+        else if (i == 6 && !strcmp (start_mmc_dev, "sd"))
+        {
+            snprintf(cmd_uboot[i], sizeof(cmd_uboot[i]), "%s", \
+                "setenv bootcmd \'mmc dev 0\\;fatload mmc 0:1 80800000 zImage\\;fatload mmc 0:1 83000000 imx6ull-alpha-emmc.dtb\\;bootz 80800000 - 83000000\'");
+        }
         printf("#-->run cmd: %s\n", cmd_uboot[i]);
         run_command(cmd_uboot[i], 0);
     }
@@ -45,7 +69,7 @@ static int do_setup_start_param(cmd_tbl_t *cmdtp, int flag, int argc, char * con
  * @retval 
  */
 U_BOOT_CMD(
-    setup_start_param, 1, 0, do_setup_start_param,
+    setup_start_param, 2, 0, do_setup_start_param,
     "set ip & bootargs",
     "\nDownload the kernel image through tftp and mount the root file system through nfs"
 );
